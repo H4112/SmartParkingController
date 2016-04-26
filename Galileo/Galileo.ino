@@ -16,10 +16,10 @@ void setup() {
   pinMode(greenLed, OUTPUT);
 }
 
-double dist = 2000;
+double sum = 0;
+double ssum = 0;
 int cpt = 0;
-int nbTaken = 0;
-int nbFree = 0;
+const int tick = 100;
 
 void loop()
 {
@@ -43,36 +43,48 @@ void loop()
   // The speed of sound is 340 m/s or 29 microseconds per centimeter.
   // The ping travels out and back, so to find the distance of the
   // object we take half of the distance travelled.
-  dist = duration / 58.;
-  if(dist < 30)
-  {
-    nbTaken++;
-  }
-  else
-  {
-    nbFree++;
-  }
+  double dist = duration / 58.;
+  
+  sum += dist;
+  ssum += (dist*dist);
+  
   cpt++;
-  if(cpt == 100)
+  
+  if(cpt == tick)
   {
-    Serial.println(nbTaken);
-    Serial.println(nbFree);
-    if(nbTaken - nbFree > 50)
-    {
-      digitalWrite(redLed, LOW);
-      digitalWrite(greenLed, HIGH);
-    }
-    else if(nbTaken - nbFree > 50)
+    double avg = sum / tick;
+    double var = ssum / tick - (avg * avg);
+    Serial.print("avg : ");
+    Serial.println(avg);
+    Serial.print("var : ");
+    Serial.println(var);
+    if(avg < 30)
     {
       digitalWrite(redLed, HIGH);
       digitalWrite(greenLed, LOW);
+      if(var > 1)
+      {
+        digitalWrite(orangeLed, HIGH);
+      }
+      else
+      {
+        digitalWrite(orangeLed, LOW);
+      }
+      
     }
-    
+    else
+    {
+      digitalWrite(redLed, LOW);
+      digitalWrite(greenLed, HIGH);
+      digitalWrite(orangeLed, LOW);
+    }
+
     //exec("curl https://rsauget.fr/" + String(state) + ">/dev/ttyGS0 2>&1");
     cpt = 0;
-    nbTaken = 0;
-    nbFree = 0;
+    sum = 0;
+    ssum = 0;
   }
+  delay(1);
 }
 
 void exec(String cmd) {
